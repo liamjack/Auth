@@ -1,0 +1,25 @@
+User Authentication PHP Class
+=============================
+
+This is a simple user authentication class for PHP, which uses
+a MySQL Database which is accessed via MySQLi.
+
+The system also includes a Custom user session system, meaning
+sessions can last a predefined time, for example, 1 minute to over 10 years
+if that was ever needed.
+
+The Current functions are as follows :
+
+- login($username, $password) : Verifies user credentials
+- register($username, $password, $verifypassword, $email) : Adds a new user account to the database
+- newsession($username) : Creates a new session for the user
+- deletesession($hash) : Deletes an existing session from the database, and removes the user's cookie
+- sessioninfo($hash) : Retrieves info about the session from database (UID, Username, Expire Date, IP)
+- checksession($hash) : Checks if session is valid
+- hashpassword($password) : Hashes the password with the following : hash("SHA512", base64_encode(hash("SHA512", $password)))
+
+Hopefully the extended encryption will result in a pratically uncrackable password. The session
+system relies on the user's IP, if it changes, the user will have to reauthenticate.
+
+This is still in development, has not been rigourusly tested. The database layout is included in auth.sql
+Just Import via PhpMyAdmin into a database preferably named "auth"
