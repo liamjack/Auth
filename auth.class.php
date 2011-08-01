@@ -1,14 +1,5 @@
 <?php
 
-/* 
-
-Todo :
-
-- Add session system
-- Verify email on register
-
-*/ 
-
 class auth
 {
 	public $mysqli;
@@ -92,6 +83,7 @@ class auth
 			if(strlen($email) == 0) { $this->errormsg[] = "Email field is empty !"; }
 			elseif(strlen($email) > 100) { $this->errormsg[] = "Email is too long !"; }
 			elseif(strlen($email) < 5) { $this->errormsg[] = "Email is too short !"; }
+			elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) { $this->errormsg[] = "Email address is invalid !"; }
 		
 			if(count($this->errormsg) == 0)
 			{
