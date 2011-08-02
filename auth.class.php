@@ -8,7 +8,9 @@ class auth
 	
 	function __construct()
 	{
-		$this->mysqli = new mysqli("localhost", "root", "root", "auth");
+		// Start a new MySQLi Connection
+	
+		$this->mysqli = new mysqli("localhost", "root", "", "auth");
 	}
 	
 	/*
@@ -31,10 +33,13 @@ class auth
 			elseif(strlen($password) < 3) { $this->errormsg[] = "Username / Password is invalid !"; }
 			else 
 			{
+				// Input is valid
+			
 				$password = $this->hashpass($password);
 			
-				$query = $this->mysqli->prepare("SELECT * FROM users WHERE username=? AND password=?");
+				$query = $this->mysqli->prepare("SELECT isactive FROM users WHERE username=? AND password=?");
 				$query->bind_param("ss", $username, $password);
+				$query->bind_result($isactive);
 				$query->execute();
 				$query->store_result();
 				$count = $query->num_rows;
@@ -42,18 +47,35 @@ class auth
 			
 				if($count == 0)
 				{
+					// Username and / or password are incorrect
+				
 					$this->errormsg[] = "Username / Password is incorrect !";
 				}
 				else 
 				{
-					$this->newsession($username);				
+					// Username and password are correct
+					
+					if($isactive == "0")
+					{
+						// Account is not activated
+						
+						$this->errormsg[] = "Account is not activated !";
+					}
+					else
+					{
+						// Account is activated
+					
+						$this->newsession($username);				
 				
-					$this->successmsg[] = "You are now logged in !";
+						$this->successmsg[] = "You are now logged in !";
+					}
 				}
 			}
 		}
 		else 
 		{
+			// User is already logged in
+			
 			$this->errormsg[] = "You are already logged in !";
 		}
 	}
@@ -87,6 +109,8 @@ class auth
 		
 			if(count($this->errormsg) == 0)
 			{
+				// Input is valid
+			
 				$query = $this->mysqli->prepare("SELECT * FROM users WHERE username=?");
 				$query->bind_param("s", $username);
 				$query->execute();
@@ -96,10 +120,14 @@ class auth
 			
 				if($count != 0)
 				{
+					// Username already exists
+				
 					$this->errormsg[] = "Username is already taken !";
 				}
 				else 
 				{
+					// Username is not taken
+					
 					$query = $this->mysqli->prepare("SELECT * FROM users WHERE email=?");
 					$query->bind_param("s", $email);
 					$query->execute();
@@ -109,24 +137,43 @@ class auth
 				
 					if($count != 0)
 					{
+						// Email address is already used
+					
 						$this->errormsg[] = "Email is already associated to another account !";
 					}
 					else 
 					{
-						$password = $this->hashpass($password);					
+						// Email address isn't already used
 					
-						$query = $this->mysqli->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
-						$query->bind_param("sss", $username, $password, $email);
+						$password = $this->hashpass($password);
+						$activekey = $this->randomkey(15);				
+					
+						$query = $this->mysqli->prepare("INSERT INTO users (username, password, email, activekey) VALUES (?, ?, ?, ?)");
+						$query->bind_param("ssss", $username, $password, $email, $activekey);
 						$query->execute();
 						$query->close();
+						
+						$message_from = "no-reply@website.com";
+						$message_subj = "Account activation required !";
+						$message_cont = "Hello $username<br/><br/>";
+						$message_cont .= "You recently registered a new account on [WEBSITE NAME]<br/>";
+						$message_cont .= "To activate your account please click the following link<br/><br/>";
+						$message_cont .= "<a href=\"http://127.0.0.1/auth/?action=activate&username=$username&key=$activekey\">Activate my account</a>";
+						$message_head = "From: $message_from" . "\r\n";
+						$message_head .= "MIME-Version: 1.0" . "\r\n";
+						$message_head .= "Content-type: text/html; charset=iso-8859-1" . "\r\n";
+						
+						mail($email, $message_subj, $message_cont, $message_head);
 					
-						$this->successmsg[] = "New Account Created !";
+						$this->successmsg[] = "New Account Created ! Activation email sent to your email address.";
 					}
 				}			
 			}
 		}
 		else 
 		{
+			// User is already logged in
+		
 			$this->errormsg[] = "You are already logged in !";
 		}
 	}
@@ -185,11 +232,15 @@ class auth
 		
 		if($count == 0)
 		{
+			// Hash doesn't exist
+		
 			$this->errormsg[] = "Invalid Session Hash !";
+			
+			setcookie("auth_session", $hash, time() - 3600);
 		}
 		else 
 		{
-			// Delete all sessions for that username :
+			// Hash exists, Delete all sessions for that username :
 			
 			$query = $this->mysqli->prepare("DELETE FROM sessions WHERE username=?");
 			$query->bind_param("s", $username);
@@ -219,15 +270,21 @@ class auth
 		
 		if($count == 0)
 		{
+			// Hash doesn't exist
+		
 			$this->errormsg[] = "Invalid Session Hash !";
+			setcookie("auth_session", $hash, time() - 3600);
 		}
 		else 
 		{
+			// Hash exists
+		
 			return $session;			
 		}
 	}
 	
-	/* Checks if session is valid (Current IP = Stored IP + Current date < expire date)
+	/* 
+	* Checks if session is valid (Current IP = Stored IP + Current date < expire date)
 	* @param string $hash
 	* @return bool
 	*/
@@ -245,10 +302,7 @@ class auth
 		
 		if($count == 0)
 		{
-			$query = $this->mysqli->prepare("DELETE FROM sessions WHERE username=?");
-			$query->bind_param("s", $username);
-			$query->execute();
-			$query->close();
+			// Hash doesn't exist
 			
 			setcookie("auth_session", $hash, time() - 3600);
 			
@@ -258,6 +312,8 @@ class auth
 		{
 			if($_SERVER['REMOTE_ADDR'] != $db_ip)
 			{
+				// Hash exists, but IP has changed
+			
 				$query = $this->mysqli->prepare("DELETE FROM sessions WHERE username=?");
 				$query->bind_param("s", $username);
 				$query->execute();
@@ -274,6 +330,8 @@ class auth
 				
 				if($currentdate > $expiredate)
 				{
+					// Hash exists, IP is the same, but session has expired
+				
 					$query = $this->mysqli->prepare("DELETE FROM sessions WHERE username=?");
 					$query->bind_param("s", $username);
 					$query->execute();
@@ -285,13 +343,106 @@ class auth
 				}
 				else 
 				{
+					// Hash exists, IP is the same, date < expiry date
+				
 					return true;
 				}
 			}
 		}
 	}
+	
+	/*
+	* Returns a random string, length can be modified
+	* @param int $length
+	* @return string $key
+	*/
+	
+	function randomkey($length = 10)
+	{
+		$chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
+		$key = "";
 		
+		for($i = 0; $i < $length; $i++)
+		{
+			$key .= $chars{rand(0, strlen($chars) - 1)};
+		}
+		
+		return $key;
+	}
+	
+	/*
+	* Activate a user's account
+	* @param string $username
+	* @param string $key
+	*/
+	
+	function activate($username, $key)
+	{
+		// Input verification
+	
+		if(strlen($username) == 0) { $this->errormsg[] = "Invalid URL !"; }
+		elseif(strlen($username) > 30) { $this->errormsg[] = "Invalid URL !"; }
+		elseif(strlen($username) < 3) { $this->errormsg[] = "Invalid URL !"; }
+		elseif(strlen($key) > 15) { $this->errormsg[] = "Invalid URL !"; }
+		elseif(strlen($key) < 15) { $this->errormsg[] = "Invalid URL !"; }
+		else
+		{
+			// Input is valid
 			
+			$query = $this->mysqli->prepare("SELECT isactive, activekey FROM users WHERE username=?");
+			$query->bind_param("s", $username);
+			$query->bind_result($isactive, $activekey);
+			$query->execute();
+			$query->store_result();
+			$count = $query->num_rows;
+			$query->fetch();
+			$query->close();
+			
+			if($count == 0)
+			{
+				// User doesn't exist
+				
+				$this->errormsg[] = "Username is incorrect !";
+			}
+			else
+			{
+				// User exists
+				
+				if($isactive == 1)
+				{
+					// Account is already activated
+					
+					$this->errormsg[] = "Account is already activated !";
+				}
+				else
+				{
+					// Account isn't activated
+					
+					if($key == $activekey)
+					{
+						// Activation keys match
+						
+						$new_isactive = 1;
+						$new_activekey = "0";
+						
+						$query = $this->mysqli->prepare("UPDATE users SET isactive=?, activekey=? WHERE username=?");
+						$query->bind_param("iss", $new_isactive, $new_activekey, $username);
+						$query->execute();
+						$query->close();
+						
+						$this->successmsg[] = "Account successfully activated !";						
+					}
+					else
+					{
+						// Activation Keys don't match
+						
+						$this->errormsg[] = "Activation Key is incorrect !";
+					}
+				}
+			}
+		}
+	}
+
 	/*
 	* Hash user's password with SHA512 and base64_encode
 	* @param string $password
