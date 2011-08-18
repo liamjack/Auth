@@ -1,36 +1,48 @@
 <?php
 
 class auth
-{
+{	
 	public $mysqli;
 	public $errormsg;
 	public $successmsg;
+	
+	// Configuration
+	
+	private $db_host = "localhost";
+	private $db_user = "root";
+	private $db_pass = "";
+	private $db_name = "auth";
+	
+	private $conf_cookie_name = "auth_session";
+	private $conf_cookie_expire = "+1 month";
+	
 	
 	function __construct()
 	{
 		// Start a new MySQLi Connection
 	
-		$this->mysqli = new mysqli("localhost", "root", "", "auth");
+		$this->mysqli = new mysqli($this->db_host, $this->db_user, $this->db_pass, $this->db_name);
 	}
 	
 	/*
 	* Log user in via MySQL Database
-	* @param string username
-	* @param string password
+	* @param string $username
+	* @param string $password
+	* @return boolean
 	*/
 	
 	function login($username, $password)
 	{
-		if(!isset($_COOKIE['auth_session']))
+		if(!isset($_COOKIE[$conf_cookie_name]))
 		{
 			// Input verification :
 		
-			if(strlen($username) == 0) { $this->errormsg[] = "Username / Password is invalid !"; }
-			elseif(strlen($username) > 30) { $this->errormsg[] = "Username / Password is invalid !"; }
-			elseif(strlen($username) < 3) { $this->errormsg[] = "Username / Password is invalid !"; }
-			elseif(strlen($password) == 0) { $this->errormsg[] = "Username / Password is invalid !"; }
-			elseif(strlen($password) > 30) { $this->errormsg[] = "Username / Password is invalid !"; }
-			elseif(strlen($password) < 3) { $this->errormsg[] = "Username / Password is invalid !"; }
+			if(strlen($username) == 0) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+			elseif(strlen($username) > 30) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+			elseif(strlen($username) < 3) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+			elseif(strlen($password) == 0) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+			elseif(strlen($password) > 30) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+			elseif(strlen($password) < 3) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
 			else 
 			{
 				// Input is valid
@@ -43,6 +55,7 @@ class auth
 				$query->execute();
 				$query->store_result();
 				$count = $query->num_rows;
+				$query->fetch();
 				$query->close();
 			
 				if($count == 0)
@@ -50,6 +63,8 @@ class auth
 					// Username and / or password are incorrect
 				
 					$this->errormsg[] = "Username / Password is incorrect !";
+					
+					return false;
 				}
 				else 
 				{
@@ -60,6 +75,8 @@ class auth
 						// Account is not activated
 						
 						$this->errormsg[] = "Account is not activated !";
+						
+						return false;
 					}
 					else
 					{
@@ -68,6 +85,8 @@ class auth
 						$this->newsession($username);				
 				
 						$this->successmsg[] = "You are now logged in !";
+						
+						return true;
 					}
 				}
 			}
@@ -77,20 +96,23 @@ class auth
 			// User is already logged in
 			
 			$this->errormsg[] = "You are already logged in !";
+			
+			return false;
 		}
 	}
 	
 	/*
 	* Register a new user into the database
-	* @param string username
-	* @param string password
-	* @param string verifypassword
-	* @param string email
+	* @param string $username
+	* @param string $password
+	* @param string $verifypassword
+	* @param string $email
+	* @return boolean
 	*/
 	
 	function register($username, $password, $verifypassword, $email)
 	{
-		if(!isset($_COOKIE['auth_session']))
+		if(!isset($_COOKIE[$conf_cookie_name]))
 		{
 			// Input Verification :
 		
@@ -123,6 +145,8 @@ class auth
 					// Username already exists
 				
 					$this->errormsg[] = "Username is already taken !";
+					
+					return false;
 				}
 				else 
 				{
@@ -140,6 +164,8 @@ class auth
 						// Email address is already used
 					
 						$this->errormsg[] = "Email is already associated to another account !";
+						
+						return false;					
 					}
 					else 
 					{
@@ -158,7 +184,7 @@ class auth
 						$message_cont = "Hello $username<br/><br/>";
 						$message_cont .= "You recently registered a new account on [WEBSITE NAME]<br/>";
 						$message_cont .= "To activate your account please click the following link<br/><br/>";
-						$message_cont .= "<a href=\"http://127.0.0.1/auth/?action=activate&username=$username&key=$activekey\">Activate my account</a>";
+						$message_cont .= "<a href=\"http://www.example.com/auth/?page=activate&username=$username&key=$activekey\">Activate my account</a>";
 						$message_head = "From: $message_from" . "\r\n";
 						$message_head .= "MIME-Version: 1.0" . "\r\n";
 						$message_head .= "Content-type: text/html; charset=iso-8859-1" . "\r\n";
@@ -166,8 +192,14 @@ class auth
 						mail($email, $message_subj, $message_cont, $message_head);
 					
 						$this->successmsg[] = "New Account Created ! Activation email sent to your email address.";
+						
+						return true;					
 					}
 				}			
+			}
+			else 
+			{
+				return false;
 			}
 		}
 		else 
@@ -175,6 +207,8 @@ class auth
 			// User is already logged in
 		
 			$this->errormsg[] = "You are already logged in !";
+			
+			return false;
 		}
 	}
 	
@@ -204,7 +238,7 @@ class auth
 		$query->close();
 		
 		$ip = $_SERVER['REMOTE_ADDR'];
-		$expiredate = date("Y-m-d H:i:s", strtotime("+1 month"));
+		$expiredate = date("Y-m-d H:i:s", strtotime($config_cookie_expire));
 		$expiretime = strtotime($expiredate);
 		
 		$query = $this->mysqli->prepare("INSERT INTO sessions (uid, username, hash, expiredate, ip) VALUES (?, ?, ?, ?, ?)");
@@ -212,7 +246,7 @@ class auth
 		$query->execute();
 		$query->close();
 		
-		setcookie("auth_session", $hash, $expiretime);
+		setcookie($conf_cookie_name, $hash, $expiretime);
 	}
 	
 	/*
@@ -236,7 +270,7 @@ class auth
 		
 			$this->errormsg[] = "Invalid Session Hash !";
 			
-			setcookie("auth_session", $hash, time() - 3600);
+			setcookie($conf_cookie_name, $hash, time() - 3600);
 		}
 		else 
 		{
@@ -247,7 +281,7 @@ class auth
 			$query->execute();
 			$query->close();
 			
-			setcookie("auth_session", $hash, time() - 3600);
+			setcookie($conf_cookie_name, $hash, time() - 3600);
 		}
 	}
 	
@@ -273,7 +307,9 @@ class auth
 			// Hash doesn't exist
 		
 			$this->errormsg[] = "Invalid Session Hash !";
-			setcookie("auth_session", $hash, time() - 3600);
+			setcookie($conf_cookie_name, $hash, time() - 3600);
+			
+			return false;
 		}
 		else 
 		{
@@ -304,7 +340,7 @@ class auth
 		{
 			// Hash doesn't exist
 			
-			setcookie("auth_session", $hash, time() - 3600);
+			setcookie($conf_cookie_name, $hash, time() - 3600);
 			
 			return false;
 		}
@@ -319,7 +355,7 @@ class auth
 				$query->execute();
 				$query->close();
 				
-				setcookie("auth_session", $hash, time() - 3600);
+				setcookie($conf_cookie_name, $hash, time() - 3600);
 				
 				return false;
 			}
@@ -337,7 +373,7 @@ class auth
 					$query->execute();
 					$query->close();
 					
-					setcookie("auth_session", $hash, time() - 3600);
+					setcookie($conf_cookie_name, $hash, time() - 3600);
 					
 					return false;
 				}
@@ -374,17 +410,18 @@ class auth
 	* Activate a user's account
 	* @param string $username
 	* @param string $key
+	* @return boolean
 	*/
 	
 	function activate($username, $key)
 	{
 		// Input verification
 	
-		if(strlen($username) == 0) { $this->errormsg[] = "Invalid URL !"; }
-		elseif(strlen($username) > 30) { $this->errormsg[] = "Invalid URL !"; }
-		elseif(strlen($username) < 3) { $this->errormsg[] = "Invalid URL !"; }
-		elseif(strlen($key) > 15) { $this->errormsg[] = "Invalid URL !"; }
-		elseif(strlen($key) < 15) { $this->errormsg[] = "Invalid URL !"; }
+		if(strlen($username) == 0) { $this->errormsg[] = "Invalid URL !"; return false; }
+		elseif(strlen($username) > 30) { $this->errormsg[] = "Invalid URL !"; return false; }
+		elseif(strlen($username) < 3) { $this->errormsg[] = "Invalid URL !"; return false; }
+		elseif(strlen($key) > 15) { $this->errormsg[] = "Invalid URL !"; return false; }
+		elseif(strlen($key) < 15) { $this->errormsg[] = "Invalid URL !"; return false; }
 		else
 		{
 			// Input is valid
@@ -403,6 +440,8 @@ class auth
 				// User doesn't exist
 				
 				$this->errormsg[] = "Username is incorrect !";
+				
+				return false;
 			}
 			else
 			{
@@ -413,6 +452,8 @@ class auth
 					// Account is already activated
 					
 					$this->errormsg[] = "Account is already activated !";
+					
+					return true;
 				}
 				else
 				{
@@ -430,13 +471,17 @@ class auth
 						$query->execute();
 						$query->close();
 						
-						$this->successmsg[] = "Account successfully activated !";						
+						$this->successmsg[] = "Account successfully activated !";
+						
+						return true;						
 					}
 					else
 					{
 						// Activation Keys don't match
 						
 						$this->errormsg[] = "Activation Key is incorrect !";
+						
+						return false;
 					}
 				}
 			}
