@@ -8,10 +8,10 @@ class auth
 	
 	// DB Configuration
 	
-	private $db_host = "localhost";
-	private $db_user = "*****";
-	private $db_pass = "*****";
-	private $db_name = "auth";
+	private $db_host = "******";
+	private $db_user = "******";
+	private $db_pass = "******";
+	private $db_name = "******";
 	
 	// Functions
 	
@@ -33,58 +33,75 @@ class auth
 	{
 		if(!isset($_COOKIE["auth_session"]))
 		{
-			// Input verification :
-		
-			if(strlen($username) == 0) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
-			elseif(strlen($username) > 30) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
-			elseif(strlen($username) < 3) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
-			elseif(strlen($password) == 0) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
-			elseif(strlen($password) > 30) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
-			elseif(strlen($password) < 3) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+			$attcount = $this->getattempt($_SERVER['REMOTE_ADDR']);
+			
+			if($attcount >= 5)
+			{
+				$this->errormsg[] = "You have been temporarily locked out !";
+				$this->errormsg[] = "Please wait 30 minutes.";
+			}
 			else 
 			{
-				// Input is valid
+				// Input verification :
 			
-				$password = $this->hashpass($password);
-			
-				$query = $this->mysqli->prepare("SELECT isactive FROM users WHERE username = ? AND password = ?");
-				$query->bind_param("ss", $username, $password);
-				$query->bind_result($isactive);
-				$query->execute();
-				$query->store_result();
-				$count = $query->num_rows;
-				$query->fetch();
-				$query->close();
-			
-				if($count == 0)
-				{
-					// Username and / or password are incorrect
-				
-					$this->errormsg[] = "Username / Password is incorrect !";
-					
-					return false;
-				}
+				if(strlen($username) == 0) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+				elseif(strlen($username) > 30) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+				elseif(strlen($username) < 3) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+				elseif(strlen($password) == 0) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+				elseif(strlen($password) > 30) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
+				elseif(strlen($password) < 3) { $this->errormsg[] = "Username / Password is invalid !"; return false; }
 				else 
 				{
-					// Username and password are correct
-					
-					if($isactive == "0")
+					// Input is valid
+				
+					$password = $this->hashpass($password);
+				
+					$query = $this->mysqli->prepare("SELECT isactive FROM users WHERE username = ? AND password = ?");
+					$query->bind_param("ss", $username, $password);
+					$query->bind_result($isactive);
+					$query->execute();
+					$query->store_result();
+					$count = $query->num_rows;
+					$query->fetch();
+					$query->close();
+				
+					if($count == 0)
 					{
-						// Account is not activated
+						// Username and / or password are incorrect
+					
+						$this->errormsg[] = "Username / Password is incorrect !";
 						
-						$this->errormsg[] = "Account is not activated !";
+						$this->addattempt($_SERVER['REMOTE_ADDR']);
+						
+						$attcount = $attcount + 1;
+						$remaincount = 5 - $attcount;
+						
+						$this->errormsg[] = "$remaincount attempts remaining.";
 						
 						return false;
 					}
-					else
+					else 
 					{
-						// Account is activated
-					
-						$this->newsession($username);				
-				
-						$this->successmsg[] = "You are now logged in !";
+						// Username and password are correct
 						
-						return true;
+						if($isactive == "0")
+						{
+							// Account is not activated
+							
+							$this->errormsg[] = "Account is not activated !";
+							
+							return false;
+						}
+						else
+						{
+							// Account is activated
+						
+							$this->newsession($username);				
+					
+							$this->successmsg[] = "You are now logged in !";
+							
+							return true;
+						}
 					}
 				}
 			}
