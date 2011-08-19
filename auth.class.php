@@ -6,16 +6,14 @@ class auth
 	public $errormsg;
 	public $successmsg;
 	
-	// Configuration
+	// DB Configuration
 	
 	private $db_host = "localhost";
-	private $db_user = "root";
-	private $db_pass = "";
+	private $db_user = "*****";
+	private $db_pass = "*****";
 	private $db_name = "auth";
 	
-	private $conf_cookie_name = "auth_session";
-	private $conf_cookie_expire = "+1 month";
-	
+	// Functions
 	
 	function __construct()
 	{
@@ -33,7 +31,7 @@ class auth
 	
 	function login($username, $password)
 	{
-		if(!isset($_COOKIE[$conf_cookie_name]))
+		if(!isset($_COOKIE["auth_session"]))
 		{
 			// Input verification :
 		
@@ -49,7 +47,7 @@ class auth
 			
 				$password = $this->hashpass($password);
 			
-				$query = $this->mysqli->prepare("SELECT isactive FROM users WHERE username=? AND password=?");
+				$query = $this->mysqli->prepare("SELECT isactive FROM users WHERE username = ? AND password = ?");
 				$query->bind_param("ss", $username, $password);
 				$query->bind_result($isactive);
 				$query->execute();
@@ -112,7 +110,7 @@ class auth
 	
 	function register($username, $password, $verifypassword, $email)
 	{
-		if(!isset($_COOKIE[$conf_cookie_name]))
+		if(!isset($_COOKIE["auth_session"]))
 		{
 			// Input Verification :
 		
@@ -179,12 +177,12 @@ class auth
 						$query->execute();
 						$query->close();
 						
-						$message_from = "no-reply@website.com";
+						$message_from = "no-reply@cuonic.tk";
 						$message_subj = "Account activation required !";
 						$message_cont = "Hello $username<br/><br/>";
-						$message_cont .= "You recently registered a new account on [WEBSITE NAME]<br/>";
+						$message_cont .= "You recently registered a new account on Cuonic Auth Test<br/>";
 						$message_cont .= "To activate your account please click the following link<br/><br/>";
-						$message_cont .= "<a href=\"http://www.example.com/auth/?page=activate&username=$username&key=$activekey\">Activate my account</a>";
+						$message_cont .= "<b><a href=\"http://auth.cuonic.tk/?page=activate&username=$username&key=$activekey\">Activate my account</a></b>";
 						$message_head = "From: $message_from" . "\r\n";
 						$message_head .= "MIME-Version: 1.0" . "\r\n";
 						$message_head .= "Content-type: text/html; charset=iso-8859-1" . "\r\n";
@@ -238,7 +236,7 @@ class auth
 		$query->close();
 		
 		$ip = $_SERVER['REMOTE_ADDR'];
-		$expiredate = date("Y-m-d H:i:s", strtotime($config_cookie_expire));
+		$expiredate = date("Y-m-d H:i:s", strtotime("+1 month"));
 		$expiretime = strtotime($expiredate);
 		
 		$query = $this->mysqli->prepare("INSERT INTO sessions (uid, username, hash, expiredate, ip) VALUES (?, ?, ?, ?, ?)");
@@ -246,7 +244,7 @@ class auth
 		$query->execute();
 		$query->close();
 		
-		setcookie($conf_cookie_name, $hash, $expiretime);
+		setcookie("auth_session", $hash, $expiretime);
 	}
 	
 	/*
@@ -270,7 +268,7 @@ class auth
 		
 			$this->errormsg[] = "Invalid Session Hash !";
 			
-			setcookie($conf_cookie_name, $hash, time() - 3600);
+			setcookie("auth_session", $hash, time() - 3600);
 		}
 		else 
 		{
@@ -281,7 +279,7 @@ class auth
 			$query->execute();
 			$query->close();
 			
-			setcookie($conf_cookie_name, $hash, time() - 3600);
+			setcookie("auth_session", $hash, time() - 3600);
 		}
 	}
 	
@@ -307,7 +305,7 @@ class auth
 			// Hash doesn't exist
 		
 			$this->errormsg[] = "Invalid Session Hash !";
-			setcookie($conf_cookie_name, $hash, time() - 3600);
+			setcookie("auth_session", $hash, time() - 3600);
 			
 			return false;
 		}
@@ -340,7 +338,7 @@ class auth
 		{
 			// Hash doesn't exist
 			
-			setcookie($conf_cookie_name, $hash, time() - 3600);
+			setcookie("auth_session", $hash, time() - 3600);
 			
 			return false;
 		}
@@ -355,7 +353,7 @@ class auth
 				$query->execute();
 				$query->close();
 				
-				setcookie($conf_cookie_name, $hash, time() - 3600);
+				setcookie("auth_session", $hash, time() - 3600);
 				
 				return false;
 			}
@@ -373,7 +371,7 @@ class auth
 					$query->execute();
 					$query->close();
 					
-					setcookie($conf_cookie_name, $hash, time() - 3600);
+					setcookie("auth_session", $hash, time() - 3600);
 					
 					return false;
 				}
@@ -483,6 +481,104 @@ class auth
 						
 						return false;
 					}
+				}
+			}
+		}
+	}
+	
+	/*
+	* Adds a new attempt to database based on user's IP
+	* @param string $ip
+	*/
+	
+	function addattempt($ip)
+	{
+		$query = $this->mysqli->prepare("SELECT count FROM attempts WHERE ip = ?");
+		$query->bind_param("s", $ip);
+		$query->bind_result($attempt_count);
+		$query->execute();
+		$query->store_result();
+		$count = $query->num_rows;
+		$query->fetch();
+		$query->close();
+		
+		if($count == 0)
+		{
+			// No record of this IP in attempts table already exists, create new
+			
+			$attempt_expiredate = date("Y-m-d H:i:s", strtotime("+30 minutes"));
+			$attempt_count = 1;
+			
+			$query = $this->mysqli->prepare("INSERT INTO attempts (ip, count, expiredate) VALUES (?, ?, ?)");
+			$query->bind_param("sis", $ip, $attempt_count, $attempt_expiredate);
+			$query->execute();
+			$query->close();
+		}
+		else 
+		{
+			// IP Already exists in attempts table, add 1 to current count
+			
+			$attempt_expiredate = date("Y-m-d H:i:s", strtotime("+30 minutes"));
+			$attempt_count = $attempt_count + 1;
+			
+			$query = $this->mysqli->prepare("UPDATE attempts SET count=?, expiredate=? WHERE ip=?");
+			$query->bind_param("iss", $attempt_count, $attempt_expiredate, $ip);
+			$query->execute();
+			$query->close();
+		}
+	}
+	
+	/*
+	* Provides amount of attempts already in database based on user's IP
+	* @param string $ip
+	* @return int $attempt_count
+	*/
+	
+	function getattempt($ip)
+	{
+		$query = $this->mysqli->prepare("SELECT count FROM attempts WHERE ip = ?");
+		$query->bind_param("s", $ip);
+		$query->bind_result($attempt_count);
+		$query->execute();
+		$query->store_result();
+		$count = $query->num_rows;
+		$query->fetch();
+		$query->close();
+		
+		if($count == 0)
+		{
+			$attempt_count = 0;
+		}
+		
+		return $attempt_count;
+	}
+	
+	/*
+	* Function used to remove expired attempt logs from database (Recommended as Cron Job)
+	*/
+	
+	function expireattempt()
+	{
+		$query = $this->mysqli->prepare("SELECT ip, expiredate FROM attempts");
+		$query->bind_result($ip, $expiredate);
+		$query->execute();
+		$query->store_result();
+		$count = $query->num_rows;
+		
+		$curr_time = strtotime(date("Y-m-d H:i:s"));
+		
+		if($count != 0)
+		{
+			while($query->fetch())
+			{
+				$attempt_expiredate = strtotime($expiredate);
+				
+				if($attempt_expiredate <= $curr_time)
+				{
+					$query2 = $this->mysqli->prepare("DELETE FROM attempts WHERE ip = ?");
+					$query2->bind_param("s", $ip);
+					$query2->execute();
+					$query2->close();
 				}
 			}
 		}

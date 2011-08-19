@@ -1,17 +1,29 @@
 -- phpMyAdmin SQL Dump
--- version 3.3.9
+-- version 3.3.7deb5build0.10.10.1
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 02, 2011 at 11:30 AM
--- Server version: 5.5.8
--- PHP Version: 5.3.5
+-- Generation Time: Aug 19, 2011 at 03:12 AM
+-- Server version: 5.1.49
+-- PHP Version: 5.3.3-1ubuntu9.5
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 
 --
 -- Database: `auth`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `attempts`
+--
+
+CREATE TABLE IF NOT EXISTS `attempts` (
+  `ip` varchar(15) NOT NULL,
+  `count` int(11) NOT NULL,
+  `expiredate` datetime NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -27,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `expiredate` datetime NOT NULL,
   `ip` varchar(15) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=13 ;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -40,7 +52,6 @@ CREATE TABLE IF NOT EXISTS `users` (
   `username` varchar(30) NOT NULL,
   `password` varchar(128) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `isactive` tinyint(1) NOT NULL DEFAULT '0',
-  `activekey` varchar(15) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+

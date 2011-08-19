@@ -16,6 +16,11 @@ The Current functions are as follows :
 - deletesession($hash) : Deletes an existing session from the database, and removes the user's cookie
 - sessioninfo($hash) : Retrieves info about the session from database (UID, Username, Expire Date, IP)
 - checksession($hash) : Checks if session is valid
+- randomkey($length) : Returns a random key, used as activation key, contain lowercase / uppercase letters and numbers
+- activate($username, $key) : Activates an account based on username and activation key
+- addattempt($ip) : Logs a new attempt of authentication based on user IP
+- getattempt($ip) : Retrieves amount of attempts from database based on user IP
+- expireattempt() : Removes expired attempt logs from database, should be ran as cron job
 - hashpassword($password) : Hashes the password with the following : hash("SHA512", base64_encode(hash("SHA512", $password)))
 
 Hopefully the extended encryption will result in a pratically uncrackable password. The session
