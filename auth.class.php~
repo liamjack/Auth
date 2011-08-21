@@ -515,9 +515,9 @@ class auth
 	function changepass($username, $currpass, $newpass, $verifynewpass)
 	{
 		
-		if(strlen($username) == 0) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
-		elseif(strlen($username) > 30) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
-		elseif(strlen($username) < 3) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
+		if(strlen($username) == 0) { $this->errormsg[] = "Username field is empty !"; }
+		elseif(strlen($username) > 30) { $this->errormsg[] = "Username is too long !"; }
+		elseif(strlen($username) < 3) { $this->errormsg[] = "Username is too short !"; }
 		if(strlen($currpass) == 0) { $this->errormsg[] = "Current Password field is empty !"; }
 		elseif(strlen($currpass) < 5) { $this->errormsg[] = "Current Password is too short !"; }
 		elseif(strlen($currpass) > 30) { $this->errormsg[] = "Current Password is too long !"; }
@@ -568,74 +568,7 @@ class auth
 				}
 			}
 		}
-		else 
-		{
-			return false;
-		}
 	}
-	
-	/*
-	* Changes the stored email address based on username
-	* @param string $username
-	* @param string $email
-	* @return boolean
-	*/
-	
-	function changeemail($username, $email)
-	{
-		if(strlen($username) == 0) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
-		elseif(strlen($username) > 30) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
-		elseif(strlen($username) < 3) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
-		if(strlen($email) == 0) { $this->errormsg[] = "Email field is empty !"; }
-		elseif(strlen($email) > 100) { $this->errormsg[] = "Email is too long !"; }
-		elseif(strlen($email) < 5) { $this->errormsg[] = "Email is too short !"; }
-		elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) { $this->errormsg[] = "Email address is invalid !"; }
-		
-		if(count($this->errormsg) == 0)
-		{
-			$query = $this->mysqli->prepare("SELECT email FROM users WHERE username=?");
-			$query->bind_param("s", $username);
-			$query->bind_result($db_email);
-			$query->execute();
-			$query->store_result();
-			$count = $query->num_rows;
-			$query->fetch();
-			$query->close();
-			
-			if($count == 0)
-			{
-				$this->errormsg[] = "Username is incorrect !";
-				
-				return false;
-			}
-			else 
-			{
-				if($email == $db_email)
-				{
-					$this->errormsg[] = "New email address matches the existing one !";
-					
-					return false;
-				}
-				else 
-				{
-					$query = $this->mysqli->prepare("UPDATE users SET email=? WHERE username=?");
-					$query->bind_param("ss", $email, $username);
-					$query->execute();
-					$query->close();
-					
-					$this->successmsg[] = "Email address successfully changed !";
-					
-					return true;
-				}
-			}
-		}
-		else 
-		{
-			return false;
-		}
-	}
-			
-				
 	
 	/*
 	* Adds a new attempt to database based on user's IP
