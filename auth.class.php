@@ -634,8 +634,73 @@ class auth
 			return false;
 		}
 	}
+	
+	/*
+	* Deletes a user's account. Requires user's password
+	* @param string $username
+	* @param string $password
+	* @return boolean
+	*/
+	
+	function deleteaccount($username, $password)
+	{
+		if(strlen($username) == 0) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
+		elseif(strlen($username) > 30) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
+		elseif(strlen($username) < 3) { $this->errormsg[] = "Error encountered whilst processing your request !"; }
+		if(strlen($password) == 0) { $this->errormsg[] = "Password field is empty !"; }
+		elseif(strlen($password) > 30) { $this->errormsg[] = "Password is too long !"; }
+		elseif(strlen($password) < 5) { $this->errormsg[] = "Password is too short !"; }
+		
+		if(count($this->errormsg) == 0)
+		{
+			$password = $this->hashpass($password);			
 			
+			$query = $this->mysqli->prepare("SELECT password FROM users WHERE username=?");
+			$query->bind_param("s", $username);
+			$query->bind_result($db_password);
+			$query->execute();
+			$query->store_result();
+			$count = $query->num_rows;
+			$query->fetch();
+			$query->close();
+			
+			if($count == 0)
+			{
+				$this->errormsg[] = "Username is incorrect !";
 				
+				return false;
+			}
+			else 
+			{
+				if($password == $db_password)
+				{
+					$query = $this->mysqli->prepare("DELETE FROM users WHERE username=?");
+					$query->bind_param("s", $username);
+					$query->execute();
+					$query->close();
+					
+					$query = $this->mysqli->prepare("DELETE FROM sessions WHERE username=?");
+					$query->bind_param("s", $username);
+					$query->execute();
+					$query->close();
+					
+					$this->successmsg[] = "Account deleted successfully !";
+					
+					return true;
+				}
+				else 
+				{
+					$this->errormsg[] = "Password is incorrect !";
+					
+					return false;
+				}
+			}
+		}
+		else 
+		{
+			return false;
+		}
+	}		
 	
 	/*
 	* Adds a new attempt to database based on user's IP
