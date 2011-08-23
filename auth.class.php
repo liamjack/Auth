@@ -670,7 +670,7 @@ class auth
 				
 				$resetkey = $this->randomkey(15);
 				
-				$query = $this->mysqli->prepare("SELECT username, email FROM users WHERE email=?");
+				$query = $this->mysqli->prepare("SELECT username FROM users WHERE email=?");
 				$query->bind_param("s", $email);
 				$query->bind_result($username);
 				$query->execute();
