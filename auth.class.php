@@ -724,8 +724,8 @@ class auth
 				elseif(strlen($key) < 15) { $this->errormsg[] = "Reset Key is too short !"; }
 				elseif(strlen($key) > 15) { $this->errormsg[] = "Reset Key is too long !"; }
 				if(strlen($newpass) == 0) { $this->errormsg[] = "New Password field is empty !"; }
-				elseif(strlen($newpass > 30) { $this->errormsg[] = "New Password is too long !"; }
-				elseif(strlen($newpass < 5) { $this->errormsg[] = "New Password is too short !"; }
+				elseif(strlen($newpass > 30)) { $this->errormsg[] = "New Password is too long !"; }
+				elseif(strlen($newpass < 5)) { $this->errormsg[] = "New Password is too short !"; }
 				elseif(strstr($newpass, $username)) { $this->errormsg[] = "New Password cannot contain username !"; }
 				elseif($newpass !== $verifynewpass) { $this->errormsg[] = "Passwords don't match !"; }
 				
