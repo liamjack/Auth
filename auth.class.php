@@ -794,6 +794,50 @@ class auth
 	}
 	
 	/*
+	* Checks if the reset key is correct for provided username
+	* @param string $username
+	* @param string $key
+	* @return boolean
+	*/
+	
+	function checkresetkey($username, $key)
+	{
+		if(strlen($username) == 0) { return false; }
+		elseif(strlen($username) > 30) { return false; }
+		elseif(strlen($username) < 3) { return false; }
+		elseif(strlen($key) == 0) { return false; }
+		elseif(strlen($key) < 15) { return false; }
+		elseif(strlen($key) > 15) { return false; }
+		else
+		{
+			$query = $this->mysqli->prepare("SELECT resetkey FROM users WHERE username=?");
+			$query->bind_param("s", $username);
+			$query->bind_result($db_key);
+			$query->execute();
+			$query->store_result();
+			$count = $query->num_rows;
+			$query->fetch();
+			$query->close();
+			
+			if($count == 0)
+			{
+				return false;
+			}
+			else
+			{
+				if($key == $db_key)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+	}
+	
+	/*
 	* Deletes a user's account. Requires user's password
 	* @param string $username
 	* @param string $password

@@ -21,6 +21,7 @@ The Current functions are as follows :
 - changepass($username, $currpass, $newpass, $verifynewpass) : Changes the user's password. Requires current password
 - changeemail($username, $email) : Changes the user's email
 - resetpass($username, $email, $key, $newpass, $verifynewpass) : Sends reset request email and resets user's password
+- checkresetkey($username, $key) : Checks the reset key based on username, returns true / false
 - deleteaccount($username, $password) : Deletes the user's account. Requires current password
 - addattempt($ip) : Logs a new attempt of authentication based on user IP
 - getattempt($ip) : Retrieves amount of attempts from database based on user IP
