@@ -686,7 +686,7 @@ class auth
 					$attcount = $attcount + 1;
 					$remaincount = 5 - $attcount;
 						
-					$this->errormsg[] = "$remcount attempts remaining !";
+					$this->errormsg[] = "$remaincount attempts remaining !";
 						
 					$this->addattempt($_SERVER['REMOTE_ADDR']);
 						
@@ -747,7 +747,7 @@ class auth
 						$attcount = $attcount + 1;
 						$remaincount = 5 - $attcount;
 						
-						$this->errormsg[] = "$remcount attempts remaining !";
+						$this->errormsg[] = "$remaincount attempts remaining !";
 						
 						$this->addattempt($_SERVER['REMOTE_ADDR']);
 						
@@ -777,7 +777,7 @@ class auth
 							$attcount = $attcount + 1;
 							$remaincount = 5 - $attcount;
 						
-							$this->errormsg[] = "$remcount attempts remaining !";
+							$this->errormsg[] = "$remaincount attempts remaining !";
 						
 							$this->addattempt($_SERVER['REMOTE_ADDR']);
 						
