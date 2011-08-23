@@ -672,7 +672,7 @@ class auth
 				
 				$query = $this->mysqli->prepare("SELECT username, email FROM users WHERE email=?");
 				$query->bind_param("s", $email);
-				$query->bind_param($username);
+				$query->bind_result($username);
 				$query->execute();
 				$query->store_result();
 				$count = $query->num_rows;
