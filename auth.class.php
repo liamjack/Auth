@@ -39,6 +39,8 @@ class auth
 			{
 				$this->errormsg[] = "You have been temporarily locked out !";
 				$this->errormsg[] = "Please wait 30 minutes.";
+				
+				return false;
 			}
 			else 
 			{
@@ -219,9 +221,9 @@ class auth
 		}
 		else 
 		{
-			// User is already logged in
+			// User is logged in
 		
-			$this->errormsg[] = "You are already logged in !";
+			$this->errormsg[] = "You are currently logged in !";
 			
 			return false;
 		}
@@ -632,6 +634,162 @@ class auth
 		else 
 		{
 			return false;
+		}
+	}
+	
+	/*
+	* Give the user the ability to change their password if the current password is forgotten
+	* by sending email to the email address associated to that user
+	* @param string $username
+	* @param string $email
+	* @param string $key
+	* @param string $newpass
+	* @param string $verifynewpass
+	* @return boolean
+	*/
+	
+	function resetpass($username = '0', $email ='0', $key = '0', $newpass = '0', $verifynewpass = '0')
+	{
+		$attcount = $this->getattempt($_SERVER['REMOTE_ADDR']);
+			
+		if($attcount >= 5)
+		{
+			$this->errormsg[] = "You have been temporarily locked out !";
+			$this->errormsg[] = "Please wait 30 minutes.";
+				
+			return false;
+		}
+		else
+		{
+			if($username == '0' && $key == '0')
+			{
+				if(strlen($email) == 0) { $this->errormsg[] = "Email field is empty !"; }
+				elseif(strlen($email) > 100) { $this->errormsg[] = "Email address is too long !"; }
+				elseif(strlen($email) < 5) { $this->errormsg[] = "Email address is too short !"; }
+				elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) { $this->errormsg[] = "Email address is invalid !"; }
+				
+				$resetkey = $this->randomkey(15);
+				
+				$query = $this->mysqli->prepare("SELECT username, email FROM users WHERE email=?");
+				$query->bind_param("s", $email);
+				$query->bind_param($username);
+				$query->execute();
+				$query->store_result();
+				$count = $query->num_rows;
+				$query->fetch();
+				$query->close();
+				
+				if($count == 0)
+				{
+					$this->errormsg[] = "Email is incorrect !";
+					
+					$attcount = $attcount + 1;
+					$remaincount = 5 - $attcount;
+						
+					$this->errormsg[] = "$remcount attempts remaining !";
+						
+					$this->addattempt($_SERVER['REMOTE_ADDR']);
+						
+					return false;
+				}
+				else
+				{
+					$query = $this->mysqli->prepare("UPDATE users SET resetkey=? WHERE username=?");
+					$query->bind_param("ss", $resetkey, $username);
+					$query->execute();
+					$query->close();
+					
+					$message_from = "no-reply@cuonic.tk";
+					$message_subj = "Password reset request !";
+					$message_cont = "Hello $username<br/><br/>";
+					$message_cont .= "You recently requested a password reset on Cuonic Auth Test<br/>";
+					$message_cont .= "To proceed with the password reset, please click the following link :<br/><br/>";
+					$message_cont .= "<b><a href=\"http://auth.cuonic.tk/?page=forgot&username=$username&key=$resetkey\">Reset My Password</a></b>";
+					$message_head = "From: $message_from" . "\r\n";
+					$message_head .= "MIME-Version: 1.0" . "\r\n";
+					$message_head .= "Content-type: text/html; charset=iso-8859-1" . "\r\n";
+						
+					mail($email, $message_subj, $message_cont, $message_head);
+					
+					$this->successmsg[] = "Password Reset Request sent to your email address !";
+						
+					return true;
+				}
+			}
+			else
+			{
+				// Reset Password
+				
+				if(strlen($key) == 0) { $this->errormsg[] = "Reset Key field is empty !"; }
+				elseif(strlen($key) < 15) { $this->errormsg[] = "Reset Key is too short !"; }
+				elseif(strlen($key) > 15) { $this->errormsg[] = "Reset Key is too long !"; }
+				if(strlen($newpass) == 0) { $this->errormsg[] = "New Password field is empty !"; }
+				elseif(strlen($newpass > 30) { $this->errormsg[] = "New Password is too long !"; }
+				elseif(strlen($newpass < 5) { $this->errormsg[] = "New Password is too short !"; }
+				elseif(strstr($newpass, $username)) { $this->errormsg[] = "New Password cannot contain username !"; }
+				elseif($newpass !== $verifynewpass) { $this->errormsg[] = "Passwords don't match !"; }
+				
+				if(count($this->errormsg) == 0)
+				{
+					$query = $this->mysqli->prepare("SELECT resetkey FROM users WHERE username=?");
+					$query->bind_param("s", $username);
+					$query->bind_result($db_key);
+					$query->execute();
+					$query->store_result();
+					$count = $query->num_rows;
+					$query->fetch();
+					$query->close();
+					
+					if($count == 0)
+					{
+						$this->errormsg[] = "Username is incorrect !";
+						
+						$attcount = $attcount + 1;
+						$remaincount = 5 - $attcount;
+						
+						$this->errormsg[] = "$remcount attempts remaining !";
+						
+						$this->addattempt($_SERVER['REMOTE_ADDR']);
+						
+						return false;
+					}
+					else
+					{
+						if($key == $db_key)
+						{
+							$newpass = $this->hashpass($newpass);
+							
+							$resetkey = '0';
+						
+							$query = $this->mysqli->prepare("UPDATE users SET password=?, resetkey=? WHERE username=?");
+							$query->bind_param("sss", $newpass, $resetkey, $username);
+							$query->execute();
+							$query->close();
+							
+							$this->successmsg[] = "Password successfully changed !";
+							
+							return true;
+						}
+						else
+						{
+							$this->errormsg[] = "Reset Key is incorrect !";
+							
+							$attcount = $attcount + 1;
+							$remaincount = 5 - $attcount;
+						
+							$this->errormsg[] = "$remcount attempts remaining !";
+						
+							$this->addattempt($_SERVER['REMOTE_ADDR']);
+						
+							return false;
+						}
+					}
+				}
+				else
+				{
+					return false;
+				}
+			}
 		}
 	}
 	
