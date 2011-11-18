@@ -6,20 +6,13 @@ class auth
 	public $errormsg;
 	public $successmsg;
 	
-	// DB Configuration
-	
-	private $db_host = "******";
-	private $db_user = "******";
-	private $db_pass = "******";
-	private $db_name = "******";
-	
 	// Functions
 	
 	function __construct()
 	{
-		// Start a new MySQLi Connection
+		include("config.php");
 	
-		$this->mysqli = new mysqli($this->db_host, $this->db_user, $this->db_pass, $this->db_name);
+		$this->mysqli = new mysqli($db['host'], $db['user'], $db['pass'], $db['name']);
 	}
 	
 	/*
@@ -31,11 +24,13 @@ class auth
 	
 	function login($username, $password)
 	{
+		include("config.php");
+	
 		if(!isset($_COOKIE["auth_session"]))
 		{
 			$attcount = $this->getattempt($_SERVER['REMOTE_ADDR']);
 			
-			if($attcount >= 5)
+			if($attcount >= $auth_conf['max_attempts'])
 			{
 				$this->errormsg[] = "You have been temporarily locked out !";
 				$this->errormsg[] = "Please wait 30 minutes.";
@@ -76,7 +71,7 @@ class auth
 						$this->addattempt($_SERVER['REMOTE_ADDR']);
 						
 						$attcount = $attcount + 1;
-						$remaincount = 5 - $attcount;
+						$remaincount = $auth_conf['max_attempts'] - $attcount;
 						
 						$this->errormsg[] = "$remaincount attempts remaining.";
 						
@@ -129,6 +124,8 @@ class auth
 	
 	function register($username, $password, $verifypassword, $email)
 	{
+		include("config.php");
+	
 		if(!isset($_COOKIE["auth_session"]))
 		{
 			// Input Verification :
@@ -137,7 +134,7 @@ class auth
 			elseif(strlen($username) > 30) { $this->errormsg[] = "Username is too long !"; }
 			elseif(strlen($username) < 3) { $this->errormsg[] = "Username is too short !"; }
 			if(strlen($password) == 0) { $this->errormsg[] = "Password field is empty !"; }
-			elseif(strlen($password) > 30) { $this->errormsg[] = "Password is too long !"; }
+			elseif(strlen($password) > 30) { $this->errormsg[] = "Password is too long !"; }$auth_conf['email_from']
 			elseif(strlen($password) < 5) { $this->errormsg[] = "Password is too short !"; }
 			elseif($password !== $verifypassword) { $this->errormsg[] = "Passwords don't match !"; }
 			elseif(strstr($password, $username)) { $this->errormsg[] = "Password cannot contain the username !"; }
@@ -196,13 +193,12 @@ class auth
 						$query->execute();
 						$query->close();
 						
-						$message_from = "no-reply@cuonic.tk";
-						$message_subj = "Account activation required !";
+						$message_subj = $auth_conf['site_name'] . " - Account activation required !";
 						$message_cont = "Hello $username<br/><br/>";
-						$message_cont .= "You recently registered a new account on Cuonic Auth Test<br/>";
+						$message_cont .= "You recently registered a new account on " . $auth_conf['site_name'] . "<br/>";
 						$message_cont .= "To activate your account please click the following link<br/><br/>";
-						$message_cont .= "<b><a href=\"http://auth.cuonic.tk/?page=activate&username=$username&key=$activekey\">Activate my account</a></b>";
-						$message_head = "From: $message_from" . "\r\n";
+						$message_cont .= "<b><a href=\"" . $auth_conf['base_url'] . "?page=activate&username={$username}&key={$activekey}\">Activate my account</a></b>";
+						$message_head = "From: " . $auth_conf['email_from'] . "\r\n";
 						$message_head .= "MIME-Version: 1.0" . "\r\n";
 						$message_head .= "Content-type: text/html; charset=iso-8859-1" . "\r\n";
 						
@@ -650,9 +646,11 @@ class auth
 	
 	function resetpass($username = '0', $email ='0', $key = '0', $newpass = '0', $verifynewpass = '0')
 	{
+		include("config.php");
+	
 		$attcount = $this->getattempt($_SERVER['REMOTE_ADDR']);
 			
-		if($attcount >= 5)
+		if($attcount >= $auth_conf['max_attempts'])
 		{
 			$this->errormsg[] = "You have been temporarily locked out !";
 			$this->errormsg[] = "Please wait 30 minutes.";
@@ -684,7 +682,7 @@ class auth
 					$this->errormsg[] = "Email is incorrect !";
 					
 					$attcount = $attcount + 1;
-					$remaincount = 5 - $attcount;
+					$remaincount = $auth_conf['max_attempts'] - $attcount;
 						
 					$this->errormsg[] = "$remaincount attempts remaining !";
 						
@@ -699,13 +697,12 @@ class auth
 					$query->execute();
 					$query->close();
 					
-					$message_from = "no-reply@cuonic.tk";
-					$message_subj = "Password reset request !";
-					$message_cont = "Hello $username<br/><br/>";
-					$message_cont .= "You recently requested a password reset on Cuonic Auth Test<br/>";
+					$message_subj = $auth_conf['site_name'] . " - Password reset request !";
+					$message_cont = "Hello {$username}<br/><br/>";
+					$message_cont .= "You recently requested a password reset on " . $auth_conf['site_name'] . "<br/>";
 					$message_cont .= "To proceed with the password reset, please click the following link :<br/><br/>";
-					$message_cont .= "<b><a href=\"http://auth.cuonic.tk/?page=forgot&username=$username&key=$resetkey\">Reset My Password</a></b>";
-					$message_head = "From: $message_from" . "\r\n";
+					$message_cont .= "<b><a href=\"" . $auth_conf['base_url'] . "?page=forgot&username={$username}&key={$resetkey}\">Reset My Password</a></b>";
+					$message_head = "From: " . $auth_conf['email_from'] . "\r\n";
 					$message_head .= "MIME-Version: 1.0" . "\r\n";
 					$message_head .= "Content-type: text/html; charset=iso-8859-1" . "\r\n";
 						
@@ -745,7 +742,7 @@ class auth
 						$this->errormsg[] = "Username is incorrect !";
 						
 						$attcount = $attcount + 1;
-						$remaincount = 5 - $attcount;
+						$remaincount = $auth_conf['max_attempts'] - $attcount;
 						
 						$this->errormsg[] = "$remaincount attempts remaining !";
 						
@@ -775,7 +772,7 @@ class auth
 							$this->errormsg[] = "Reset Key is incorrect !";
 							
 							$attcount = $attcount + 1;
-							$remaincount = 5 - $attcount;
+							$remaincount = $auth_conf['max_attempts'] - $attcount;
 						
 							$this->errormsg[] = "$remaincount attempts remaining !";
 						

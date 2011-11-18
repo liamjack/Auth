@@ -28,8 +28,9 @@ The Current functions are as follows :
 - expireattempt() : Removes expired attempt logs from database, should be ran as cron job
 - hashpassword($password) : Hashes the password with the following : hash("SHA512", base64_encode(hash("SHA512", $password)))
 
-Hopefully the extended encryption will result in a pratically uncrackable password. The session
+The extended encryption will result in a pratically uncrackable password. The session
 system relies on the user's IP, if it changes, the user will have to reauthenticate.
 
-This is still in development, has not been rigourusly tested. The database layout is included in auth.sql
-Just Import via PhpMyAdmin into a database preferably named "auth"
+Database layout is stored in auth.sql which you can import easily with PhpMyAdmin
+
+Auth configuration is done in config.php where you can configure the MySQL database settings, attempts settings, email settings etc...
