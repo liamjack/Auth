@@ -1,22 +1,44 @@
 -- phpMyAdmin SQL Dump
--- version 3.3.9
+-- version 3.3.7
 -- http://www.phpmyadmin.net
 --
--- Host: localhost
--- Generation Time: Aug 23, 2011 at 01:25 AM
--- Server version: 5.5.8
--- PHP Version: 5.3.5
+-- Serveur: localhost
+-- Généré le : Jeu 19 Janvier 2012 à 01:58
+-- Version du serveur: 5.1.58
+-- Version de PHP: 5.2.17
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+
 --
--- Database: `auth`
+-- Base de données: `u667856163_auth`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `attempts`
+-- Structure de la table `activitylog`
+--
+
+CREATE TABLE IF NOT EXISTS `activitylog` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` datetime NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `additionalinfo` varchar(500) NOT NULL DEFAULT 'none',
+  `ip` varchar(15) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `attempts`
 --
 
 CREATE TABLE IF NOT EXISTS `attempts` (
@@ -28,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `attempts` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `sessions`
+-- Structure de la table `sessions`
 --
 
 CREATE TABLE IF NOT EXISTS `sessions` (
@@ -39,12 +61,12 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `expiredate` datetime NOT NULL,
   `ip` varchar(15) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=17 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users`
+-- Structure de la table `users`
 --
 
 CREATE TABLE IF NOT EXISTS `users` (
@@ -56,4 +78,4 @@ CREATE TABLE IF NOT EXISTS `users` (
   `activekey` varchar(15) NOT NULL DEFAULT '0',
   `resetkey` varchar(15) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=73 ;

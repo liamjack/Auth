@@ -26,6 +26,7 @@ The Current functions are as follows :
 - addattempt($ip) : Logs a new attempt of authentication based on user IP
 - getattempt($ip) : Retrieves amount of attempts from database based on user IP
 - expireattempt() : Removes expired attempt logs from database, should be ran as cron job
+- LogActivity($username, $action, $additionalinfo) : Logs the user's usage of the class, from login to logout. Includes attempts.
 - hashpassword($password) : Hashes the password with the following : hash("SHA512", base64_encode(hash("SHA512", $password)))
 
 The extended encryption will result in a pratically uncrackable password. The session
