@@ -17,11 +17,10 @@ class auth
 	* Log user in via MySQL Database
 	* @param string $username
 	* @param string $password
-	* @param int $rememberme
 	* @return boolean
 	*/
 	
-	function login($username, $password, $rememberme = 0)
+	function login($username, $password)
 	{
 		include("config.php");
 		include("lang.php");
@@ -251,10 +250,9 @@ class auth
 	/*
 	* Creates a new session for the provided username and sets cookie
 	* @param string $username
-	* @param int $duration
 	*/
 	
-	function newsession($username, $duration = 0)
+	function newsession($username)
 	{
 		$hash = md5(microtime());
 		
@@ -275,7 +273,7 @@ class auth
 		$query->close();
 		
 		$ip = $_SERVER['REMOTE_ADDR'];
-		$expiredate = $duration;
+		$expiredate = date("Y-m-d H:i:s", strtotime("+1 hour"));
 		$expiretime = strtotime($expiredate);
 		
 		$query = $this->mysqli->prepare("INSERT INTO sessions (uid, username, hash, expiredate, ip) VALUES (?, ?, ?, ?, ?)");
