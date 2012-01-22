@@ -273,7 +273,7 @@ class auth
 		$query->close();
 		
 		$ip = $_SERVER['REMOTE_ADDR'];
-		$expiredate = date("Y-m-d H:i:s", strtotime("+1 hour"));
+		$expiredate = date("Y-m-d H:i:s", strtotime($auth_conf['session_duration']));
 		$expiretime = strtotime($expiredate);
 		
 		$query = $this->mysqli->prepare("INSERT INTO sessions (uid, username, hash, expiredate, ip) VALUES (?, ?, ?, ?, ?)");
