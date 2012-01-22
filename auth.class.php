@@ -253,6 +253,8 @@ class auth
 	
 	function newsession($username)
 	{
+		include("config.php");
+	
 		$hash = md5(microtime());
 		
 		// Fetch User ID :		
