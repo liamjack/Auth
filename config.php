@@ -19,6 +19,9 @@ $auth_conf['max_attempts'] = 5; // INT : Max number of attempts for login before
 $auth_conf['base_url'] = "http://auth.cuonic.tk/"; // URL to Getcours installation root WITH trailing slash
 $auth_conf['session_duration'] = "+1 month"; // Amount of time session lasts for. Only modify if you know what you are doing ! Default = +1 month
 
+$auth_conf['salt_1'] = "us_$dUDN4N-53"; // Salt #1 for password encryption
+$auth_conf['salt_2'] = "Yu23ds09*d?"; // Salt #1 for password encryption
+
 $loc = "en"; // Language of Auth Class output : en / fr
 
 ?>

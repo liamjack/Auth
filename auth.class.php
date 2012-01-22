@@ -1166,14 +1166,16 @@ class auth
 	}
 
 	/*
-	* Hash user's password with SHA512 and base64_encode
+	* Hash user's password with SHA512, base64_encode, ROT13 and salts !
 	* @param string $password
 	* @return string $password
 	*/
 	
 	function hashpass($password)
 	{
-		$password = hash("SHA512", base64_encode(hash("SHA512", $password)));
+		include("config.php");
+	
+		$password = hash("SHA512", base64_encode(str_rot13(hash("SHA512", str_rot13($auth_conf['salt_1'] . $password . $auth_conf['salt_2'])))));
 		return $password;
 	}
 	
