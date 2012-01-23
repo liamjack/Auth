@@ -27,7 +27,7 @@ The Current functions are as follows :
 - getattempt($ip) : Retrieves amount of attempts from database based on user IP
 - expireattempt() : Removes expired attempt logs from database, should be ran as cron job
 - LogActivity($username, $action, $additionalinfo) : Logs the user's usage of the class, from login to logout. Includes attempts.
-- hashpassword($password) : Hashes the password with the following : hash("SHA512", base64_encode(hash("SHA512", $password)))
+- hashpassword($password) : Hashes the password with the following : hash("SHA512", base64_encode(str_rot13(hash("SHA512", str_rot13($auth_conf['salt_1'] . $password . $auth_conf['salt_2'])))))
 
 The extended encryption will result in a pratically uncrackable password. The session
 system relies on the user's IP, if it changes, the user will have to reauthenticate.

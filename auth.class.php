@@ -1181,7 +1181,6 @@ class auth
 		$password = hash("SHA512", base64_encode(str_rot13(hash("SHA512", str_rot13($auth_conf['salt_1'] . $password . $auth_conf['salt_2'])))));
 		return $password;
 	}
-	
 }
 
 ?>
