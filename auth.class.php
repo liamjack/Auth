@@ -96,14 +96,7 @@ class auth
 						{
 							// Account is activated
 							
-							if($rememberme == 1)
-							{
-								$this->newsession($username, $auth_conf['cookie_time']);
-							}
-							else
-							{
-								$this->newsession($username, 0);
-							}						
+							$this->newsession($username);				
 
 							$this->LogActivity($username, "AUTH_LOGIN_SUCCESS", "User logged in");
 					
