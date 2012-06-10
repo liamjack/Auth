@@ -1136,7 +1136,7 @@ class auth
 		include("config.php");
 		include("lang.php");
 	
-		if(strlen($username) == 0) { $this->errormsg[] = $lang[$loc]['auth']['logactivity_username_empty']; return false; }
+		if(strlen($username) == 0) { $username = "GUEST"; }
 		elseif(strlen($username) < 3) { $this->errormsg[] = $lang[$loc]['auth']['logactivity_username_short']; return false; }
 		elseif(strlen($username) > 30) { $this->errormsg[] = $lang[$loc]['auth']['logactivity_username_long']; return false; }
 		

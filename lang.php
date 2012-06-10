@@ -116,7 +116,6 @@ $lang['en']['auth']['deleteaccount_username_incorrect'] = "Error encountered !";
 $lang['en']['auth']['deleteaccount_success'] = "Account deleted successfully !";
 $lang['en']['auth']['deleteaccount_password_incorrect'] = "Password is incorrect !";
 
-$lang['en']['auth']['logactivity_username_empty'] = "Error encountered !";
 $lang['en']['auth']['logactivity_username_short'] = "Error encountered !";
 $lang['en']['auth']['logactivity_username_long'] = "Error encountered !";
 $lang['en']['auth']['logactivity_action_empty'] = "Error encountered !";
@@ -235,7 +234,6 @@ $lang['fr']['auth']['deleteaccount_username_incorrect'] = "Erreur rencontrée !"
 $lang['fr']['auth']['deleteaccount_success'] = "Compte supprimé !";
 $lang['fr']['auth']['deleteaccount_password_incorrect'] = "Mot de passe incorrect !";
 
-$lang['fr']['auth']['logactivity_username_empty'] = "Erreur rencontrée !";
 $lang['fr']['auth']['logactivity_username_short'] = "Erreur rencontrée !";
 $lang['fr']['auth']['logactivity_username_long'] = "Erreur rencontrée !";
 $lang['fr']['auth']['logactivity_action_empty'] = "Erreur rencontrée !";
