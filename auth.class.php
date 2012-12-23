@@ -11,6 +11,7 @@ class auth
 		include("config.php");
 	
 		$this->mysqli = new mysqli($db['host'], $db['user'], $db['pass'], $db['name']); 
+		unset($db['pass']); // $mysqli is public, remove password for security
 	}
 	
 	/*
